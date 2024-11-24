@@ -1,6 +1,5 @@
 import { TypographyH1 } from '@/components/ui/typography';
 import React, { type PropsWithChildren } from 'react';
-
 const RoomPlayLayout = ({ children }: PropsWithChildren) => {
   return (
     <div className='min-h-screen p-4'>

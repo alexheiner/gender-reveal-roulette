@@ -4,8 +4,6 @@ import { PlayClientPage } from './components/play-client-page';
 const RoomPlayPage = async () => {
   const userId = cookies().get('userId');
 
-  console.log('got user id', userId);
-
   if (!userId || !userId?.value) {
     return <TypographyH1>Unauthorized</TypographyH1>;
   }

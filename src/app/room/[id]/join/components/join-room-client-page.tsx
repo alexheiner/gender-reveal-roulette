@@ -6,7 +6,7 @@ import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Room } from '@/types';
 import { Loader2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import type { RoomIdParams } from '../../types';
 import type { UpdateRealtimeParams } from '../actions';
 
@@ -15,7 +15,8 @@ type Props = {
 };
 export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
   const { id } = useParams<RoomIdParams['params']>();
-  const [roomCode, setRoomCode] = React.useState('');
+  const code = useSearchParams().get('code');
+  const [roomCode, setRoomCode] = React.useState(code || '');
   const [name, setName] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -76,7 +77,7 @@ export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <Button onClick={handleJoinRoom} disabled={!roomCode || !name}>
+        <Button onClick={handleJoinRoom} disabled={!roomCode || !name || loading}>
           {loading ? <Loader2 className='animate-spin' /> : null}
           Join room
         </Button>

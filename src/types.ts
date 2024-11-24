@@ -9,12 +9,13 @@ export type RealtimeRoom = {
   id: string;
   gameState: RealtimeGameState;
   players: Record<string, Player>;
+  turns: Record<number, Turn>;
 };
 
 export type RealtimeGameState = {
   ready: boolean;
   active: boolean;
-  currentTurn: string | null;
+  currentTurn: Turn | null;
   genderRevealed: boolean;
   revealerId: string | null;
   gender: Gender;
@@ -25,6 +26,14 @@ export type Gender = 'boy' | 'girl';
 export type Player = {
   id: string;
   name: string;
-  ready: boolean;
+  status: PlayerStatus;
   turnOrder: number;
 };
+
+export type Turn = {
+  turnId: number;
+  playerId: string;
+  playerName: string;
+};
+
+export type PlayerStatus = 'joined' | 'ready' | 'disconnected';

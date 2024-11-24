@@ -1,9 +1,9 @@
 'use client';
 
 import { TypographyH1, TypographyLarge } from '@/components/ui/typography';
-import type { RealtimeGameState } from '@/types';
-import React, { useEffect } from 'react';
-import { onChildChanged, ref, update } from 'firebase/database';
+import type { Gender, Player, RealtimeGameState } from '@/types';
+import React, { useEffect, useRef } from 'react';
+import { onValue, ref, update } from 'firebase/database';
 import { useParams, useRouter } from 'next/navigation';
 import { realtimeDb } from '@/lib/firebase';
 import { WaitingForHost } from './waiting-for-host';
@@ -19,20 +19,56 @@ export const PlayClientPage = ({ userId }: Props) => {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [gameState, setGameState] = React.useState<GameState>('waiting');
+  const isRevealerRef = useRef(false);
+  const turnOrderRef = useRef(0);
+  const hasSetStatusRef = useRef(false);
+  const genderRef = useRef<Gender>();
+
+  // useEffect(() => {
+  //   const playersRef = ref(realtimeDb, `rooms/${id}/players/${userId}`);
+  //   onDisconnect(playersRef).update({
+  //     status: 'disconnected',
+  //   });
+  // }, [id, userId]);
 
   useEffect(() => {
     const playersRef = ref(realtimeDb, `rooms/${id}/players/${userId}`);
 
-    update(playersRef, {
-      ready: true,
+    const unsub = onValue(playersRef, (snapshot) => {
+      const player = snapshot.val() as Player;
+
+      if (player.turnOrder !== turnOrderRef.current) {
+        console.log('setting turn order', player.turnOrder);
+        turnOrderRef.current = player.turnOrder;
+      }
     });
+
+    if (hasSetStatusRef.current === false) {
+      update(playersRef, {
+        status: 'ready',
+      });
+      hasSetStatusRef.current = true;
+    }
+
+    return () => unsub();
   }, [id, userId]);
 
   useEffect(() => {
-    const playersRef = ref(realtimeDb, `rooms/${id}/gameState`);
+    const gameStateRef = ref(realtimeDb, `rooms/${id}/gameState`);
 
-    const unsub = onChildChanged(playersRef, (snapshot) => {
+    const unsub = onValue(gameStateRef, (snapshot) => {
       const gameState = snapshot.val() as RealtimeGameState;
+
+      genderRef.current = gameState.gender;
+
+      if (gameState.revealerId === userId) {
+        isRevealerRef.current = true;
+      }
+      if (gameState.revealerId !== userId) {
+        isRevealerRef.current = false;
+      }
+
+      console.log('game state', gameState);
 
       if (gameState.ready) {
         setGameState('ready');
@@ -47,7 +83,7 @@ export const PlayClientPage = ({ userId }: Props) => {
     });
 
     return () => unsub();
-  }, [id, router.replace]);
+  }, [id, userId, router.replace]);
 
   if (gameState === 'ended') {
     return (
@@ -62,5 +98,19 @@ export const PlayClientPage = ({ userId }: Props) => {
     return <WaitingForHost />;
   }
 
-  return <PlayGame />;
+  if (gameState === 'ready' && turnOrderRef.current !== 0) {
+    console.log('mounting play game');
+    console.log('turn order', turnOrderRef.current);
+    console.log('is revealer', isRevealerRef.current);
+    return (
+      <PlayGame
+        turnOrder={turnOrderRef.current}
+        userId={userId}
+        gender={genderRef.current!}
+        isRevealer={isRevealerRef.current}
+      />
+    );
+  }
+
+  return <div>Error...</div>;
 };

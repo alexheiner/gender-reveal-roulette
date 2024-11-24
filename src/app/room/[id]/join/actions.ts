@@ -30,7 +30,7 @@ export const updateRealtime = async ({ roomId, userId, name }: UpdateRealtimePar
   const player: Player = {
     name,
     id: userId,
-    ready: false,
+    status: 'joined',
     turnOrder: maxTurnOrder === undefined ? 1 : maxTurnOrder + 1,
   };
 
