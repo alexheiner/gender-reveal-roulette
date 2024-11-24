@@ -50,7 +50,10 @@ export const PlayClientPage = ({ userId }: Props) => {
       hasSetStatusRef.current = true;
     }
 
-    return () => unsub();
+    return () => {
+      console.log('unsubbing from player ref');
+      unsub();
+    };
   }, [id, userId]);
 
   useEffect(() => {
@@ -82,7 +85,10 @@ export const PlayClientPage = ({ userId }: Props) => {
       }
     });
 
-    return () => unsub();
+    return () => {
+      console.log('unsubbing from game state ref');
+      unsub();
+    };
   }, [id, userId, router.replace]);
 
   if (gameState === 'ended') {

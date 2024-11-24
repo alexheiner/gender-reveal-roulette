@@ -10,6 +10,8 @@ export type RealtimeRoom = {
   gameState: RealtimeGameState;
   players: Record<string, Player>;
   turns: Record<number, Turn>;
+  hostId: string;
+  hostName: string;
 };
 
 export type RealtimeGameState = {

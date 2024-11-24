@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import type { RoomIdParams } from '../../types';
 import type { UpdateRealtimeParams } from '../actions';
+import { TypographyH1 } from '@/components/ui/typography';
 
 type Props = {
   updateRealtime: (params: UpdateRealtimeParams) => Promise<void>;
@@ -17,7 +18,7 @@ export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
   const { id } = useParams<RoomIdParams['params']>();
   const code = useSearchParams().get('code');
   const [roomCode, setRoomCode] = React.useState(code || '');
-  const [name, setName] = React.useState('');
+  const [username, setUserName] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const userIdRef = useRef('');
@@ -33,7 +34,7 @@ export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
 
     const userId = crypto.randomUUID();
     userIdRef.current = userId;
-    await updateRealtime({ roomId: id, userId, name });
+    await updateRealtime({ roomId: id, userId, name: username });
 
     setLoading(false);
 
@@ -64,20 +65,21 @@ export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
   }
 
   return (
-    <div className='min-h-screen flex flex-col justify-center'>
-      <div className='flex w-[500px] mx-auto h-full flex-col gap-5 items-center justify-center'>
-        <h1>Join Room</h1>
+    <div className='min-h-screen flex flex-col justify-center p-3'>
+      <div className='flex  w-full max-w-[500px]  mx-auto h-full flex-col gap-5 items-center justify-center'>
+        <TypographyH1>Join Room</TypographyH1>
         <Input
           placeholder='Enter room code'
           value={roomCode}
           onChange={(e) => setRoomCode(e.target.value)}
         />
         <Input
-          placeholder='Enter your name'
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder='Enter your username'
+          value={username}
+          autoComplete='off'
+          onChange={(e) => setUserName(e.target.value)}
         />
-        <Button onClick={handleJoinRoom} disabled={!roomCode || !name || loading}>
+        <Button onClick={handleJoinRoom} disabled={!roomCode || !username || loading}>
           {loading ? <Loader2 className='animate-spin' /> : null}
           Join room
         </Button>

@@ -1,16 +1,7 @@
 import { TypographyLarge } from '@/components/ui/typography';
 import { realtimeDb } from '@/lib/firebase';
 import type { Gender, RealtimeGameState, Turn } from '@/types';
-import {
-  get,
-  limitToFirst,
-  onValue,
-  orderByChild,
-  query,
-  ref,
-  startAfter,
-  update,
-} from 'firebase/database';
+import { equalTo, get, onValue, orderByChild, query, ref, update } from 'firebase/database';
 import { useParams } from 'next/navigation';
 import React, { useEffect } from 'react';
 // import { useGetTurnOrder } from '../hooks/useGetTurnOrder';
@@ -64,6 +55,7 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
       }
     });
     return () => {
+      console.log('unsubbing from current turn ref');
       unsubCurrentTurn();
     };
   }, [id, userId]);
@@ -83,11 +75,12 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
       await update(roomRef, values);
     } else if (isUsersTurn && !isRevealer) {
       setBackgroundClass('bg-black');
-      await updateTurn();
 
-      setTimeout(() => {
+      setTimeout(async () => {
         setBackgroundClass('bg-white');
-      }, 1000);
+        console.log('updating turn');
+        await updateTurn();
+      }, 5000);
     } else {
       console.log('Not your turn');
     }
@@ -95,6 +88,11 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
 
   const updateTurn = async () => {
     const nextTurn = await getNextTurn();
+
+    if (!nextTurn) {
+      console.log('no more turns');
+      return;
+    }
 
     const roomRef = ref(realtimeDb, `rooms/${id}/gameState`);
 
@@ -107,23 +105,24 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
     await update(roomRef, values);
   };
 
-  const getNextTurn = async (): Promise<Turn> => {
+  const getNextTurn = async (): Promise<Turn | undefined> => {
     const turnsRef = ref(realtimeDb, `rooms/${id}/turns`);
 
-    const nextTurnRef = query(
-      turnsRef,
-      orderByChild('turnId'),
-      startAfter(currentTurn?.turnId!),
-      limitToFirst(1),
-    );
+    const nextTurnRef = query(turnsRef, orderByChild('turnId'), equalTo(currentTurn!.turnId + 1));
 
     const nextTurns = await get(nextTurnRef);
+
+    let nextTurn: Turn | undefined = undefined;
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    nextTurns.forEach((turn) => {
+      nextTurn = turn.val();
+    });
 
     console.log('nextTurns', nextTurns.val());
 
     console.log('--------------nextTurn-------------', nextTurns.val()[0]);
 
-    return nextTurns.val()[0];
+    return nextTurn;
   };
 
   const handleGenderRevealed = () => {
@@ -137,7 +136,7 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
 
   return (
     <div
-      className={`absolute h-screen w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass}`}
+      className={`absolute h-screen w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-500`}
       onClick={handlePress}
     >
       {genderRevealed && (
@@ -150,13 +149,11 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
       {/* {isRevealer ? 'You are the revealer' : 'You are not the revealer'} */}
       {/* <TypographyH1>Play</TypographyH1> */}
       {/* <TypographyLarge>Turn Order: {turnOrder}</TypographyLarge> */}
-      <div>
-        <TypographyLarge>
-          {currentTurn?.playerId === userId
-            ? 'Your turn'
-            : `Player ${currentTurn?.playerName}'s turn`}
-        </TypographyLarge>
-      </div>
+      <TypographyLarge className='text-center'>
+        {currentTurn?.playerId === userId
+          ? 'Your turn'
+          : `Player ${currentTurn?.playerName}'s turn...`}
+      </TypographyLarge>
     </div>
   );
 };

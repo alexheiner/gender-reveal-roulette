@@ -151,7 +151,9 @@ export const AdminClientPage = ({ roomCode }: Props) => {
     <>
       <div className='mb-20'>
         {playersJoined.length === 0 ? (
-          <TypographyLarge>No players have joined yet</TypographyLarge>
+          <div className='text-center'>
+            <TypographyLarge>No players have joined yet</TypographyLarge>
+          </div>
         ) : (
           <ul className='space-y-7'>
             {playersJoined.map((player) => (
