@@ -1,14 +1,16 @@
+'use client';
+import { useAuth } from '@/components/providers/auth-provider';
 import { TypographyH1 } from '@/components/ui/typography';
-import { cookies } from 'next/headers';
 import { PlayClientPage } from './components/play-client-page';
 const RoomPlayPage = () => {
-  const userId = cookies().get('userId');
+  const { user } = useAuth();
+  const userId = user?.uid;
 
-  if (!userId || !userId?.value) {
-    return <TypographyH1>Unauthorized</TypographyH1>;
+  if (!userId) {
+    return <TypographyH1>Not signed in</TypographyH1>;
   }
 
-  return <PlayClientPage userId={userId.value} />;
+  return <PlayClientPage userId={userId} />;
 };
 
 export default RoomPlayPage;

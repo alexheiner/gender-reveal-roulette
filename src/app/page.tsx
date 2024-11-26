@@ -14,33 +14,44 @@ import {
 import { useRouter } from 'next/navigation';
 import { generateRandomString } from '@/lib/utils';
 import { doc, setDoc } from 'firebase/firestore';
-import type { Gender, RealtimeRoom } from '@/types';
+import type { Gender, RealtimeRoom, Room } from '@/types';
 import { Input } from '@/components/ui/input';
 import { TypographyH1 } from '@/components/ui/typography';
+import { useAuth } from '@/components/providers/auth-provider';
 
 type SelectedGender = Gender | '';
 
 export default function Home() {
   const [gender, setGender] = useState<SelectedGender>('');
+  const { signInAnonymously } = useAuth();
   const [name, setName] = useState<string>('');
   const router = useRouter();
 
   const handleClick = async () => {
     const roomId = crypto.randomUUID();
     const roomCode = generateRandomString(6);
+    const userCredential = await signInAnonymously();
 
-    await setDoc(doc(db, 'rooms', roomId), {
+    console.log('userCredential', userCredential);
+
+    if (!userCredential.user) {
+      return;
+    }
+    const room: Room = {
       maxPlayers: 10,
+      currentPlayers: 0,
       id: roomId,
       active: true,
       roomCode,
-    });
+    };
+
+    await setDoc(doc(db, 'rooms', roomId), room);
 
     if (gender === '') {
       return;
     }
 
-    const room: RealtimeRoom = {
+    const realtimeRoom: RealtimeRoom = {
       id: roomId,
       gameState: {
         ready: false,
@@ -52,11 +63,11 @@ export default function Home() {
       },
       players: {},
       turns: {},
-      hostId: crypto.randomUUID(),
+      hostId: userCredential.user.uid,
       hostName: name,
     };
 
-    set(ref(realtimeDb, `rooms/${roomId}`), room);
+    set(ref(realtimeDb, `rooms/${roomId}`), realtimeRoom);
 
     router.push(`/room/${roomId}/admin`);
   };
@@ -94,7 +105,7 @@ export default function Home() {
             </SelectGroup>
           </SelectContent>
         </Select>
-        <Button disabled={!gender} onClick={handleClick}>
+        <Button disabled={!gender || !name} onClick={handleClick}>
           Create room
         </Button>
       </div>

@@ -8,19 +8,34 @@ import type { Room } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import type { RoomIdParams } from '../../types';
-import type { UpdateRealtimeParams } from '../actions';
 import { TypographyH1 } from '@/components/ui/typography';
-
-type Props = {
-  updateRealtime: (params: UpdateRealtimeParams) => Promise<void>;
+import { useAuth } from '@/components/providers/auth-provider';
+import { realtimeDb } from '@/lib/firebase';
+import type { Player } from '@/types';
+import {
+  get,
+  limitToLast,
+  orderByChild,
+  query as realtimeQuery,
+  ref,
+  set,
+} from 'firebase/database';
+type UpdateRealtimeParams = {
+  roomId: string;
+  name: string;
 };
-export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
+// type Props = {
+//   updateRealtime: (params: UpdateRealtimeParams) => Promise<void>;
+// };
+export const JoinRoomClientPage = () => {
   const { id } = useParams<RoomIdParams['params']>();
   const code = useSearchParams().get('code');
   const [roomCode, setRoomCode] = React.useState(code || '');
   const [username, setUserName] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const { signInAnonymously, user } = useAuth();
+  console.log('user', user);
   const userIdRef = useRef('');
   const router = useRouter();
 
@@ -32,13 +47,60 @@ export const JoinRoomClientPage = ({ updateRealtime }: Props) => {
       return;
     }
 
-    const userId = crypto.randomUUID();
-    userIdRef.current = userId;
-    await updateRealtime({ roomId: id, userId, name: username });
+    let userId: string | undefined = undefined;
+    if (!user) {
+      const userCredentials = await signInAnonymously();
 
-    setLoading(false);
+      if (!userCredentials.user) {
+        setError('Failed to sign in');
+        setLoading(false);
+        return;
+      }
+      userId = userCredentials.user.uid;
+    } else {
+      userId = user.uid;
+    }
+    try {
+      userIdRef.current = userId;
+      await updateRealtime({ roomId: id, name: username });
 
-    router.replace(`/room/${id}/play`);
+      setLoading(false);
+
+      router.replace(`/room/${id}/play`);
+    } catch (error) {
+      console.log('a;lsdjfasdklj', error);
+    }
+  };
+
+  const updateRealtime = async ({ roomId, name }: UpdateRealtimeParams) => {
+    // get the max turn order
+    const playersRef = ref(realtimeDb, `rooms/${roomId}/players`);
+
+    const turnOrderRef = realtimeQuery(playersRef, orderByChild('turnOrder'), limitToLast(1));
+
+    const maxTurnOrderSnapshot = await get(turnOrderRef);
+
+    let maxTurnOrder: number | undefined = undefined;
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    maxTurnOrderSnapshot.forEach((child) => {
+      maxTurnOrder = (child.val() as Player).turnOrder;
+    });
+
+    // save the player
+    const playerRef = ref(realtimeDb, `rooms/${roomId}/players/${user!.uid}`);
+
+    const player: Player = {
+      name,
+      id: user!.uid,
+      status: 'joined',
+      turnOrder: maxTurnOrder === undefined ? 1 : maxTurnOrder + 1,
+    };
+
+    try {
+      set(playerRef, player);
+    } catch (error) {
+      console.log('error', error);
+    }
   };
 
   const canJoinRoom = async (roomCode: string): Promise<boolean> => {

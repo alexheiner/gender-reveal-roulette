@@ -1,6 +1,7 @@
 export type Room = {
   id: string;
   maxPlayers: number;
+  currentPlayers: number;
   active: boolean;
   roomCode: string;
 };
