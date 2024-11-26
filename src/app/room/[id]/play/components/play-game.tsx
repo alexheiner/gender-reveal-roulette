@@ -4,22 +4,19 @@ import type { Gender, RealtimeGameState, Turn } from '@/types';
 import { equalTo, get, onValue, orderByChild, query, ref, update } from 'firebase/database';
 import { useParams } from 'next/navigation';
 import React, { useEffect } from 'react';
-// import { useGetTurnOrder } from '../hooks/useGetTurnOrder';
-// import { Loader2 } from 'lucide-react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '../hooks/useWindowSize';
 type Props = {
   isRevealer: boolean;
   userId: string;
-  turnOrder: number;
   gender: Gender;
 };
 
-type BackgroundClass = 'bg-pink-600' | 'bg-blue-600' | 'bg-black' | 'bg-white';
+type BackgroundClass = 'bg-girl-background' | 'bg-boy-background' | 'bg-black' | 'bg-white';
 const boyColors = ['#0056b3', '#0078d4', '#0095ff', '#00b0ff', '#00c7ff'];
 const girlColors = ['#ff007f', '#ff2e8b', '#ff4d97', '#ff6ca3', '#ff8ab0'];
 
-export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
+export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
   const { id } = useParams<{ id: string }>();
   const [isUsersTurn, setIsUsersTurn] = React.useState(false);
   const [currentTurn, setCurrentTurn] = React.useState<Turn | null>(null);
@@ -127,9 +124,9 @@ export const PlayGame = ({ userId, isRevealer, turnOrder, gender }: Props) => {
 
   const handleGenderRevealed = () => {
     if (gender === 'boy') {
-      setBackgroundClass('bg-blue-600');
+      setBackgroundClass('bg-boy-background');
     } else {
-      setBackgroundClass('bg-pink-600');
+      setBackgroundClass('bg-girl-background');
     }
     setGenderRevealed(true);
   };
