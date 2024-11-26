@@ -1,7 +1,7 @@
 'use client';
 
 import { TypographyH1, TypographyLarge } from '@/components/ui/typography';
-import type { Gender, Player, RealtimeGameState } from '@/types';
+import type { Gender, RealtimeGameState } from '@/types';
 import React, { useEffect, useRef } from 'react';
 import { onValue, ref, update } from 'firebase/database';
 import { useParams, useRouter } from 'next/navigation';
@@ -20,7 +20,6 @@ export const PlayClientPage = ({ userId }: Props) => {
   const { id } = useParams<{ id: string }>();
   const [gameState, setGameState] = React.useState<GameState>('waiting');
   const isRevealerRef = useRef(false);
-  const turnOrderRef = useRef(0);
   const hasSetStatusRef = useRef(false);
   const genderRef = useRef<Gender>();
 
@@ -34,15 +33,6 @@ export const PlayClientPage = ({ userId }: Props) => {
   useEffect(() => {
     const playersRef = ref(realtimeDb, `rooms/${id}/players/${userId}`);
 
-    const unsub = onValue(playersRef, (snapshot) => {
-      const player = snapshot.val() as Player;
-
-      if (player.turnOrder !== turnOrderRef.current) {
-        console.log('setting turn order', player.turnOrder);
-        turnOrderRef.current = player.turnOrder;
-      }
-    });
-
     if (hasSetStatusRef.current === false) {
       update(playersRef, {
         status: 'ready',
@@ -52,7 +42,6 @@ export const PlayClientPage = ({ userId }: Props) => {
 
     return () => {
       console.log('unsubbing from player ref');
-      unsub();
     };
   }, [id, userId]);
 
@@ -104,17 +93,11 @@ export const PlayClientPage = ({ userId }: Props) => {
     return <WaitingForHost />;
   }
 
-  if (gameState === 'ready' && turnOrderRef.current !== 0) {
+  if (gameState === 'ready') {
     console.log('mounting play game');
-    console.log('turn order', turnOrderRef.current);
     console.log('is revealer', isRevealerRef.current);
     return (
-      <PlayGame
-        turnOrder={turnOrderRef.current}
-        userId={userId}
-        gender={genderRef.current!}
-        isRevealer={isRevealerRef.current}
-      />
+      <PlayGame userId={userId} gender={genderRef.current!} isRevealer={isRevealerRef.current} />
     );
   }
 
