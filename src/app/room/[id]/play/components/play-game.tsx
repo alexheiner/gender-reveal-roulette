@@ -44,22 +44,20 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
         console.log('--------- GAME STATE ---------', gameState);
       }
 
-      if (gameState.currentTurn?.playerId === userId) {
+      if (gameState.currentTurn?.playerId === userId && !gameState.genderRevealed) {
         setIsUsersTurn(true);
         setCurrentTurn(gameState.currentTurn);
       }
 
-      if (gameState.currentTurn?.playerId !== userId) {
+      if (gameState.currentTurn?.playerId !== userId && !gameState.genderRevealed) {
         setIsUsersTurn(false);
         setCurrentTurn(gameState.currentTurn);
       }
 
       if (gameState.currentTurn?.playerId !== userId && gameState.genderRevealed) {
-        if (gameState.genderRevealed) {
-          setTimeout(() => {
-            handleGenderRevealed();
-          }, 1000);
-        }
+        setTimeout(() => {
+          handleGenderRevealed();
+        }, 3000);
       }
     });
     return () => {
@@ -143,26 +141,29 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
       className={`absolute h-full w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-500`}
       onClick={handlePress}
     >
-      {genderRevealed && (
+      {genderRevealed ? (
         <Confetti
           width={width}
           height={height}
           colors={gender === 'boy' ? boyColors : girlColors}
         />
+      ) : (
+        <>
+          {currentTurn?.playerId === userId ? (
+            <>
+              <TypographyLarge className='text-center'>Your turn</TypographyLarge>
+              <TypographyLarge className='text-center'>Tap anywhere on the screen</TypographyLarge>
+            </>
+          ) : (
+            <TypographyLarge className='text-center'>
+              Player {currentTurn?.playerId}'s turn
+            </TypographyLarge>
+          )}
+        </>
       )}
       {/* {isRevealer ? 'You are the revealer' : 'You are not the revealer'} */}
       {/* <TypographyH1>Play</TypographyH1> */}
       {/* <TypographyLarge>Turn Order: {turnOrder}</TypographyLarge> */}
-      {currentTurn?.playerId === userId ? (
-        <>
-          <TypographyLarge className='text-center'>Your turn</TypographyLarge>
-          <TypographyLarge className='text-center'>Tap anywhere on the screen</TypographyLarge>
-        </>
-      ) : (
-        <TypographyLarge className='text-center'>
-          Player {currentTurn?.playerId}'s turn
-        </TypographyLarge>
-      )}
     </div>
   );
 };
