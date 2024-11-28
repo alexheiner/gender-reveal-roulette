@@ -10,18 +10,21 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 type AuthContextType = {
   user: User | null;
   signInAnonymously: () => Promise<UserCredential>;
+  setUser: (user: User | null) => void;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   signInAnonymously: async () => ({}) as UserCredential,
+  setUser: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(auth.currentUser);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('auth state changed', user);
       setUser(user);
     });
 
@@ -33,7 +36,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, signInAnonymously }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, setUser, signInAnonymously }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 

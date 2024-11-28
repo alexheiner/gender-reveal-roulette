@@ -9,7 +9,8 @@ import { Loader2 } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import type { RoomIdParams } from '../../types';
 import { TypographyH1 } from '@/components/ui/typography';
-import { useAuth } from '@/components/providers/auth-provider';
+// import { useAuth } from '@/components/providers/auth-provider';
+import type { User } from 'firebase/auth';
 import { realtimeDb } from '@/lib/firebase';
 import type { Player } from '@/types';
 import {
@@ -20,6 +21,7 @@ import {
   ref,
   set,
 } from 'firebase/database';
+import { useAuth } from '@/components/providers/auth-provider';
 type UpdateRealtimeParams = {
   roomId: string;
   name: string;
@@ -34,8 +36,8 @@ export const JoinRoomClientPage = () => {
   const [username, setUserName] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-  const { signInAnonymously, user } = useAuth();
-  console.log('user', user);
+  const { signInAnonymously, user, setUser } = useAuth();
+  // console.log('user', user);
   const userIdRef = useRef('');
   const router = useRouter();
 
@@ -47,7 +49,8 @@ export const JoinRoomClientPage = () => {
       return;
     }
 
-    let userId: string | undefined = undefined;
+    let userToUse: User | null = null;
+
     if (!user) {
       const userCredentials = await signInAnonymously();
 
@@ -56,16 +59,19 @@ export const JoinRoomClientPage = () => {
         setLoading(false);
         return;
       }
-      userId = userCredentials.user.uid;
+      console.log('getting from userCredentials', userCredentials);
+      userToUse = userCredentials.user;
     } else {
-      userId = user.uid;
+      console.log('getting from user', user);
+      userToUse = user;
     }
     try {
-      userIdRef.current = userId;
+      userIdRef.current = userToUse.uid;
       await updateRealtime({ roomId: id, name: username });
 
       setLoading(false);
 
+      setUser(userToUse);
       router.replace(`/room/${id}/play`);
     } catch (error) {
       if (error instanceof Error) {
@@ -91,11 +97,13 @@ export const JoinRoomClientPage = () => {
     });
 
     // save the player
-    const playerRef = ref(realtimeDb, `rooms/${roomId}/players/${user!.uid}`);
+    // const playerRef = ref(realtimeDb, `rooms/${roomId}/players/${user!.uid}`);
+    const playerRef = ref(realtimeDb, `rooms/${roomId}/players/${userIdRef.current}`);
 
     const player: Player = {
       name,
-      id: user!.uid,
+      id: userIdRef.current,
+      // id: user!.uid,
       status: 'joined',
       turnOrder: maxTurnOrder === undefined ? 1 : maxTurnOrder + 1,
     };
