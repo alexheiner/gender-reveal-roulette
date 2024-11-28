@@ -19,13 +19,14 @@ type Props = {
   roomCode: string;
 };
 
-const hostName = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://';
 export const AdminClientPage = ({ roomCode }: Props) => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [revealerId, setRevealerId] = React.useState<string | null>(null);
   const [playersJoined, setPlayersJoined] = React.useState<Player[]>([]);
   const [ready, setReady] = React.useState(false);
+
+  const hostName = window.location.origin;
 
   // useEffect(() => {
   //   const roomRef = ref(realtimeDb, `rooms/${id}/gameState`);
