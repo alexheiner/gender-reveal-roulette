@@ -3,7 +3,7 @@ import { realtimeDb } from '@/lib/firebase';
 import type { Gender, RealtimeGameState, Turn } from '@/types';
 import { equalTo, get, onValue, orderByChild, query, ref, update } from 'firebase/database';
 import { useParams } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '../hooks/useWindowSize';
 type Props = {
@@ -22,8 +22,17 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
   const [currentTurn, setCurrentTurn] = React.useState<Turn | null>(null);
   const [backgroundClass, setBackgroundClass] = React.useState<BackgroundClass>('bg-white');
   const [genderRevealed, setGenderRevealed] = React.useState(false);
+  const metaRef = useRef<HTMLMetaElement | null>(null);
+
+  useEffect(() => {
+    if (!metaRef.current) {
+      metaRef.current = document.querySelector('meta[name="theme-color"]');
+    }
+  }, []);
   const { width, height } = useWindowSize();
-  console.log('currentTurn', currentTurn);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('currentTurn', currentTurn);
+  }
 
   useEffect(() => {
     const currentTurnRef = ref(realtimeDb, `rooms/${id}/gameState`);
@@ -31,7 +40,9 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
     const unsubCurrentTurn = onValue(currentTurnRef, (snapshot) => {
       const gameState = snapshot.val() as RealtimeGameState;
 
-      console.log('--------- GAME STATE ---------', gameState);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('--------- GAME STATE ---------', gameState);
+      }
 
       if (gameState.currentTurn?.playerId === userId) {
         setIsUsersTurn(true);
@@ -52,7 +63,9 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
       }
     });
     return () => {
-      console.log('unsubbing from current turn ref');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('unsubbing from current turn ref');
+      }
       unsubCurrentTurn();
     };
   }, [id, userId]);
@@ -75,7 +88,6 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
 
       setTimeout(async () => {
         setBackgroundClass('bg-white');
-        console.log('updating turn');
         await updateTurn();
       }, 5000);
     } else {
@@ -87,7 +99,6 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
     const nextTurn = await getNextTurn();
 
     if (!nextTurn) {
-      console.log('no more turns');
       return;
     }
 
@@ -96,8 +107,6 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
     const values: Partial<RealtimeGameState> = {
       currentTurn: nextTurn,
     };
-
-    console.log('updateing turn with values', values);
 
     await update(roomRef, values);
   };
@@ -115,25 +124,23 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
       nextTurn = turn.val();
     });
 
-    console.log('nextTurns', nextTurns.val());
-
-    console.log('--------------nextTurn-------------', nextTurns.val()[0]);
-
     return nextTurn;
   };
 
   const handleGenderRevealed = () => {
     if (gender === 'boy') {
       setBackgroundClass('bg-boy-background');
+      metaRef.current?.setAttribute('content', '#3b82f6');
     } else {
       setBackgroundClass('bg-girl-background');
+      metaRef.current?.setAttribute('content', '#ec4899');
     }
     setGenderRevealed(true);
   };
 
   return (
     <div
-      className={`absolute h-screen w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-500`}
+      className={`absolute h-full w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-500`}
       onClick={handlePress}
     >
       {genderRevealed && (
@@ -146,11 +153,16 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
       {/* {isRevealer ? 'You are the revealer' : 'You are not the revealer'} */}
       {/* <TypographyH1>Play</TypographyH1> */}
       {/* <TypographyLarge>Turn Order: {turnOrder}</TypographyLarge> */}
-      <TypographyLarge className='text-center'>
-        {currentTurn?.playerId === userId
-          ? 'Your turn'
-          : `Player ${currentTurn?.playerName}'s turn...`}
-      </TypographyLarge>
+      {currentTurn?.playerId === userId ? (
+        <>
+          <TypographyLarge className='text-center'>Your turn</TypographyLarge>
+          <TypographyLarge className='text-center'>Tap anywhere on the screen</TypographyLarge>
+        </>
+      ) : (
+        <TypographyLarge className='text-center'>
+          Player {currentTurn?.playerId}'s turn
+        </TypographyLarge>
+      )}
     </div>
   );
 };

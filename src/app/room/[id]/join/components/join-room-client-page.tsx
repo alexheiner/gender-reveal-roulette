@@ -68,6 +68,10 @@ export const JoinRoomClientPage = () => {
 
       router.replace(`/room/${id}/play`);
     } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      }
+      setLoading(false);
       console.log('a;lsdjfasdklj', error);
     }
   };
@@ -127,7 +131,7 @@ export const JoinRoomClientPage = () => {
   }
 
   return (
-    <div className='min-h-screen flex flex-col justify-center p-3'>
+    <div className='h-screen flex flex-col justify-center p-3'>
       <div className='flex  w-full max-w-[500px]  mx-auto h-full flex-col gap-5 items-center justify-center'>
         <TypographyH1>Join Room</TypographyH1>
         <Input

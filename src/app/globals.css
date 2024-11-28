@@ -39,8 +39,8 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --girl-background: 0 100% 94%;
-    --boy-background: 202 67% 87%;
+    --girl-background: 330 81% 60%;
+    --boy-background: 217 91% 60%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -67,6 +67,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --girl-background: 330 81% 60%;
+    --boy-background: 217 91% 60%;
   }
 }
 
