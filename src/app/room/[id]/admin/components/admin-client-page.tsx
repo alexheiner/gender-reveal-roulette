@@ -182,7 +182,7 @@ export const AdminClientPage = ({ roomCode }: Props) => {
         <Button variant={'destructive'} onClick={handleCloseRoom}>
           Close room
         </Button>
-        <Button variant={'default'} onClick={handleSetReady}>
+        <Button variant={'default'} onClick={handleSetReady} disabled={!revealerId}>
           Start game
         </Button>
       </div>

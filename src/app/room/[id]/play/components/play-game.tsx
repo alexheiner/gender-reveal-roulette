@@ -138,7 +138,7 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
 
   return (
     <div
-      className={`absolute h-full w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-500`}
+      className={`absolute h-dvh w-screen top-0 bottom-0 right-0 left-0 bg-blue ${backgroundClass} p-3 transition-all duration-150`}
       onClick={handlePress}
     >
       {genderRevealed ? (
@@ -156,7 +156,7 @@ export const PlayGame = ({ userId, isRevealer, gender }: Props) => {
             </>
           ) : (
             <TypographyLarge className='text-center'>
-              Player {currentTurn?.playerId}'s turn
+              {currentTurn?.playerName}'s turn
             </TypographyLarge>
           )}
         </>

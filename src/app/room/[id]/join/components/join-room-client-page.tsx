@@ -139,7 +139,7 @@ export const JoinRoomClientPage = () => {
   }
 
   return (
-    <div className='h-screen flex flex-col justify-center p-3'>
+    <div className='h-dvh flex flex-col justify-center p-3'>
       <div className='flex  w-full max-w-[500px]  mx-auto h-full flex-col gap-5 items-center justify-center'>
         <TypographyH1>Join Room</TypographyH1>
         <Input
@@ -153,7 +153,11 @@ export const JoinRoomClientPage = () => {
           autoComplete='off'
           onChange={(e) => setUserName(e.target.value)}
         />
-        <Button onClick={handleJoinRoom} disabled={!roomCode || !username || loading}>
+        <Button
+          className='animated-background bg-gradient-to-r from-blue-500 via-blue-500 to-pink-500'
+          onClick={handleJoinRoom}
+          disabled={!roomCode || !username || loading}
+        >
           {loading ? <Loader2 className='animate-spin' /> : null}
           Join room
         </Button>

@@ -14,7 +14,7 @@ const RoomPlayLayout = async ({ children, params }: Props) => {
   const roomName = roomNameSnapshot.val() as string;
 
   return (
-    <div className='min-h-screen p-4'>
+    <div className='h-dvh p-4'>
       <TypographyH1 className='text-center'>{roomName}'s Room</TypographyH1>
       <main>{children}</main>
     </div>
